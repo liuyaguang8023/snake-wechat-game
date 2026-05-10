@@ -1,0 +1,319 @@
+import { GameLoop } from './core/GameLoop';
+import { SceneManager, Scene } from './core/SceneManager';
+import { InputManager } from './core/InputManager';
+import { Renderer } from './render/Renderer';
+import { Effects } from './render/Effects';
+import { GameContext } from './core/context';
+import { MenuScene } from './scenes/MenuScene';
+import { GameScene, GameMode } from './scenes/GameScene';
+import { LevelSelectScene } from './scenes/LevelSelectScene';
+import { ResultScene } from './scenes/ResultScene';
+import { SettingsScene } from './scenes/SettingsScene';
+import { Storage } from './utils/storage';
+import { CANVAS_WIDTH, CANVAS_HEIGHT, CELL_SIZE, GRID_ROWS, STORAGE_KEYS } from './utils/constants';
+
+// WeChat mini game canvas
+const wx = (globalThis as any).wx;
+const canvas = wx ? wx.createCanvas() : null;
+if (canvas) {
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT + 30;
+}
+
+const ctx = canvas?.getContext('2d') as CanvasRenderingContext2D | null;
+
+const renderer = ctx ? new Renderer(ctx, CANVAS_WIDTH, CANVAS_HEIGHT) : null;
+const inputManager = new InputManager();
+const effects = new Effects();
+const sceneManager = new SceneManager();
+const gameLoop = new GameLoop();
+
+// Wire up GameContext
+if (renderer) GameContext.renderer = renderer;
+GameContext.inputManager = inputManager;
+if (ctx) effects.bind(ctx);
+
+// Bind swipe input
+if (canvas) inputManager.bind(canvas);
+
+// Button definitions
+interface Button {
+  x: number; y: number; w: number; h: number;
+  label: string;
+  action: () => void;
+}
+
+let buttons: Button[] = [];
+
+// Touch click detection (separate from swipe)
+if (canvas) {
+  let touchStartTime = 0;
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  canvas.addEventListener('touchstart', (e: any) => {
+    const touch = e.touches[0];
+    touchStartTime = Date.now();
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+  });
+
+  canvas.addEventListener('touchend', (e: any) => {
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    const dt = Date.now() - touchStartTime;
+    const dx = Math.abs(touch.clientX - touchStartX);
+    const dy = Math.abs(touch.clientY - touchStartY);
+
+    // Only treat as click if short duration and minimal movement
+    if (dt < 300 && dx < 20 && dy < 20) {
+      buttons.forEach((btn) => {
+        if (touch.clientX >= btn.x && touch.clientX <= btn.x + btn.w &&
+            touch.clientY >= btn.y && touch.clientY <= btn.y + btn.h) {
+          btn.action();
+        }
+      });
+    }
+  });
+}
+
+// Start with menu
+const menuScene = new MenuScene(sceneManager);
+let currentGameScene: GameScene | null = null;
+
+sceneManager.switchTo(menuScene);
+
+// Main game loop
+gameLoop.start((dt) => {
+  sceneManager.update(dt);
+
+  const current = sceneManager.getCurrentScene();
+
+  if (current instanceof GameScene) {
+    currentGameScene = current;
+    // GameScene's onUpdate handles its own rendering
+    current.onUpdate(dt);
+
+    // Check for game state transitions
+    if (current.isGameOver() || current.isWon()) {
+      const scoreSystem = current.getScoreSystem();
+      const mode = current.getMode();
+      const levelId = current.getLevelId();
+      const resultScene = new ResultScene(sceneManager);
+      sceneManager.switchTo(resultScene, {
+        mode,
+        score: scoreSystem.score,
+        levelId,
+        stars: scoreSystem.ratingStars,
+      });
+      currentGameScene = null;
+    }
+  } else if (current instanceof LevelSelectScene) {
+    renderLevelSelect(current);
+  } else if (current instanceof ResultScene) {
+    renderResult(current);
+  } else if (current instanceof SettingsScene) {
+    renderSettings();
+  }
+});
+
+// ==== Render Functions ====
+
+function drawButton(x: number, y: number, w: number, h: number, text: string, color: string): void {
+  if (!ctx) return;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x + 8, y); ctx.lineTo(x + w - 8, y);
+  ctx.arcTo(x + w, y, x + w, y + 8, 8);
+  ctx.lineTo(x + w, y + h - 8);
+  ctx.arcTo(x + w, y + h, x + w - 8, y + h, 8);
+  ctx.lineTo(x + 8, y + h);
+  ctx.arcTo(x, y + h, x, y + h - 8, 8);
+  ctx.lineTo(x, y + 8);
+  ctx.arcTo(x, y, x + 8, y, 8);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, x + w / 2, y + h / 2 + 5);
+}
+
+function renderMenu(): void {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+  ctx.fillStyle = '#FFFDE7';
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+
+  ctx.fillStyle = '#5D4037';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('\u{1F40D} 贪吃蛇', CANVAS_WIDTH / 2, 60);
+
+  ctx.font = '48px sans-serif';
+  ctx.fillText('\u{1F40D}', CANVAS_WIDTH / 2, 130);
+
+  const bestScore = Storage.get<number>(STORAGE_KEYS.bestScoreEndless, 0);
+  ctx.font = '14px sans-serif';
+  ctx.fillText(`最高分: ${bestScore}`, CANVAS_WIDTH / 2, 170);
+
+  const btnW = 160, btnH = 44, startY = 210, gap = 56;
+  drawButton(CANVAS_WIDTH / 2 - btnW / 2, startY, btnW, btnH, '无尽模式', '#FFB300');
+  drawButton(CANVAS_WIDTH / 2 - btnW / 2, startY + gap, btnW, btnH, '关卡模式', '#66BB6A');
+  drawButton(CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 2, btnW, btnH, '设置', '#42A5F5');
+
+  buttons = [
+    { x: CANVAS_WIDTH / 2 - btnW / 2, y: startY, w: btnW, h: btnH, label: '无尽', action: startEndless },
+    { x: CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap, w: btnW, h: btnH, label: '关卡', action: () => {
+      sceneManager.switchTo(new LevelSelectScene(sceneManager));
+    }},
+    { x: CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 2, w: btnW, h: btnH, label: '设置', action: () => {
+      sceneManager.switchTo(new SettingsScene(sceneManager));
+    }},
+  ];
+}
+
+function startEndless(): void {
+  const gameScene = new GameScene(sceneManager, { mode: GameMode.Endless });
+  sceneManager.switchTo(gameScene);
+}
+
+function renderLevelSelect(scene: LevelSelectScene): void {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+  ctx.fillStyle = '#FFFDE7';
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+
+  ctx.fillStyle = '#5D4037';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('关卡选择', CANVAS_WIDTH / 2, 36);
+
+  const ls = scene.getLevelSystem();
+  const cols = 2, rows = 5;
+  const cardW = 120, cardH = 70, gapX = 20, gapY = 16;
+  const startX = (CANVAS_WIDTH - (cols * cardW + (cols - 1) * gapX)) / 2;
+  const startY = 60;
+
+  const btns: Button[] = [];
+
+  for (let i = 0; i < 10; i++) {
+    const levelId = i + 1;
+    const r = Math.floor(i / cols);
+    const c = i % cols;
+    const x = startX + c * (cardW + gapX);
+    const y = startY + r * (cardH + gapY);
+
+    const unlocked = ls.isUnlocked(levelId);
+    const stars = ls.getStars(levelId);
+
+    ctx.fillStyle = unlocked ? '#FFFFFF' : '#E0E0E0';
+    ctx.strokeStyle = unlocked ? '#FFB300' : '#BDBDBD';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 8, y); ctx.lineTo(x + cardW - 8, y);
+    ctx.arcTo(x + cardW, y, x + cardW, y + 8, 8);
+    ctx.lineTo(x + cardW, y + cardH - 8);
+    ctx.arcTo(x + cardW, y + cardH, x + cardW - 8, y + cardH, 8);
+    ctx.lineTo(x + 8, y + cardH);
+    ctx.arcTo(x, y + cardH, x, y + cardH - 8, 8);
+    ctx.lineTo(x, y + 8);
+    ctx.arcTo(x, y, x + 8, y, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#5D4037';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(unlocked ? `第${levelId}关` : '🔒', x + cardW / 2, y + 26);
+
+    if (stars > 0) {
+      ctx.fillText('⭐️'.repeat(stars), x + cardW / 2, y + 50);
+    }
+
+    if (unlocked) {
+      btns.push({ x, y, w: cardW, h: cardH, label: `Level ${levelId}`, action: () => scene.handleSelectLevel(levelId) });
+    }
+  }
+
+  const backY = startY + rows * (cardH + gapY) + 10;
+  drawButton(CANVAS_WIDTH / 2 - 60, backY, 120, 36, '返回', '#9E9E9E');
+  btns.push({ x: CANVAS_WIDTH / 2 - 60, y: backY, w: 120, h: 36, label: 'Back', action: () => {
+    sceneManager.switchTo(new MenuScene(sceneManager));
+  }});
+
+  buttons = btns;
+}
+
+function renderResult(scene: ResultScene): void {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+  ctx.fillStyle = '#FFFDE7';
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+
+  const data = scene.getData();
+  if (!data) return;
+
+  ctx.fillStyle = '#5D4037';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.textAlign = 'center';
+
+  const btnY = 210;
+
+  if (data.mode === GameMode.Level && data.stars && data.stars > 0) {
+    ctx.fillText('🎉 通关!', CANVAS_WIDTH / 2, 50);
+    ctx.font = '18px sans-serif';
+    ctx.fillText(`分数: ${data.score}`, CANVAS_WIDTH / 2, 90);
+    ctx.font = '28px sans-serif';
+    ctx.fillText('⭐️'.repeat(data.stars), CANVAS_WIDTH / 2, 130);
+
+    if (data.levelId === 10) {
+      ctx.font = '16px sans-serif';
+      ctx.fillStyle = '#E65100';
+      ctx.fillText('悦宝，以后要辛苦你啦！', CANVAS_WIDTH / 2, 170);
+      ctx.fillStyle = '#5D4037';
+    }
+  } else {
+    ctx.fillText('Game Over', CANVAS_WIDTH / 2, 50);
+    ctx.font = '18px sans-serif';
+    ctx.fillText(`分数: ${data.score}`, CANVAS_WIDTH / 2, 90);
+  }
+
+  const best = Storage.get<number>(STORAGE_KEYS.bestScoreEndless, 0);
+  if (data.mode === GameMode.Endless) {
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`历史最高: ${best}`, CANVAS_WIDTH / 2, 130);
+  }
+
+  drawButton(CANVAS_WIDTH / 2 - 60, btnY, 120, 40, '再来一局', '#FFB300');
+  drawButton(CANVAS_WIDTH / 2 - 60, btnY + 50, 120, 40, '返回菜单', '#66BB6A');
+
+  buttons = [
+    { x: CANVAS_WIDTH / 2 - 60, y: btnY, w: 120, h: 40, label: 'Restart', action: () => scene.handleRestart() },
+    { x: CANVAS_WIDTH / 2 - 60, y: btnY + 50, w: 120, h: 40, label: 'Menu', action: () => scene.handleBackToMenu() },
+  ];
+}
+
+function renderSettings(): void {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+  ctx.fillStyle = '#FFFDE7';
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT + 30);
+
+  ctx.fillStyle = '#5D4037';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('设置', CANVAS_WIDTH / 2, 40);
+
+  ctx.font = '14px sans-serif';
+  ctx.fillText('更多功能开发中...', CANVAS_WIDTH / 2, 120);
+
+  drawButton(CANVAS_WIDTH / 2 - 60, 180, 120, 40, '返回', '#9E9E9E');
+  buttons = [
+    { x: CANVAS_WIDTH / 2 - 60, y: 180, w: 120, h: 40, label: 'Back', action: () => {
+      sceneManager.switchTo(new MenuScene(sceneManager));
+    }},
+  ];
+}
