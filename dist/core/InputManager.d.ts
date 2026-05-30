@@ -4,6 +4,7 @@ export declare class InputManager {
     private touchStartX;
     private touchStartY;
     private readonly swipeThreshold;
-    bind(canvas: any): void;
+    private bound;
+    bind(_canvas: any): void;
     consumeDirection(): Direction | null;
 }

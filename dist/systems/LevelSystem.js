@@ -10,7 +10,8 @@ class LevelSystem {
         this.stars = storage_1.Storage.get(constants_1.STORAGE_KEYS.levelStars, {});
     }
     loadLevel(id) {
-        const level = levels_1.LEVELS.find((l) => l.id === id) ?? levels_1.LEVELS[0];
+        var _a;
+        const level = (_a = levels_1.LEVELS.find((l) => l.id === id)) !== null && _a !== void 0 ? _a : levels_1.LEVELS[0];
         // 如果网格行数不是原始的 20 行，按比例重映射障碍物行位置
         if (constants_1.GameConfig.GRID_ROWS !== 20) {
             const scale = constants_1.GameConfig.GRID_ROWS / 20;
@@ -18,7 +19,7 @@ class LevelSystem {
                 row: Math.min(Math.floor(o.row * scale), constants_1.GameConfig.GRID_ROWS - 1),
                 col: o.col,
             }));
-            return { ...level, obstacles: remappedObstacles };
+            return Object.assign(Object.assign({}, level), { obstacles: remappedObstacles });
         }
         return level;
     }
@@ -26,7 +27,8 @@ class LevelSystem {
         return id <= this.unlockedLevel;
     }
     completeLevel(id, starsEarned) {
-        const prev = this.stars[id] ?? 0;
+        var _a;
+        const prev = (_a = this.stars[id]) !== null && _a !== void 0 ? _a : 0;
         if (starsEarned > prev) {
             this.stars[id] = starsEarned;
         }
@@ -36,7 +38,8 @@ class LevelSystem {
         this.persist();
     }
     getStars(id) {
-        return this.stars[id] ?? 0;
+        var _a;
+        return (_a = this.stars[id]) !== null && _a !== void 0 ? _a : 0;
     }
     persist() {
         storage_1.Storage.set(constants_1.STORAGE_KEYS.unlockedLevel, this.unlockedLevel);

@@ -15,7 +15,7 @@ import { Storage } from './utils/storage';
 import { GameConfig, initDimensions, STORAGE_KEYS } from './utils/constants';
 
 // WeChat mini game canvas — screen-adaptive sizing
-const wx = (globalThis as any).wx;
+const wx = typeof (globalThis as any) !== 'undefined' ? (globalThis as any).wx : undefined;
 const canvas = wx ? wx.createCanvas() : null;
 
 let screenW = 375;   // fallback
@@ -74,20 +74,21 @@ interface Button {
 
 let buttons: Button[] = [];
 
-// Touch click detection (separate from swipe)
-if (canvas) {
+// Touch click detection (uses WeChat wx.onTouch* API)
+if (wx) {
   let touchStartTime = 0;
   let touchStartX = 0;
   let touchStartY = 0;
 
-  canvas.addEventListener('touchstart', (e: any) => {
+  wx.onTouchStart((e: any) => {
     const touch = e.touches[0];
+    if (!touch) return;
     touchStartTime = Date.now();
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
   });
 
-  canvas.addEventListener('touchend', (e: any) => {
+  wx.onTouchEnd((e: any) => {
     const touch = e.changedTouches[0];
     if (!touch) return;
     const dt = Date.now() - touchStartTime;

@@ -39,7 +39,8 @@ class PowerUpSystem {
         return this.justActivatedSet.has(id);
     }
     getRemaining(id) {
-        return this.actives.get(id)?.remaining ?? 0;
+        var _a, _b;
+        return (_b = (_a = this.actives.get(id)) === null || _a === void 0 ? void 0 : _a.remaining) !== null && _b !== void 0 ? _b : 0;
     }
     activeIds() {
         return Array.from(this.actives.keys());

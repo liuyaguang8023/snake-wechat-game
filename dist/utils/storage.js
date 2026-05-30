@@ -25,7 +25,7 @@ exports.Storage = {
             const val = getStorageSync(key);
             return val !== undefined && val !== null && val !== '' ? val : defaultValue;
         }
-        catch {
+        catch (_a) {
             return defaultValue;
         }
     },
@@ -33,7 +33,7 @@ exports.Storage = {
         try {
             setStorageSync(key, value);
         }
-        catch {
+        catch (_a) {
             // 静默失败
         }
     },

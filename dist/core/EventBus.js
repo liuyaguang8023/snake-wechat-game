@@ -12,10 +12,12 @@ class EventBus {
         this.handlers.get(event).add(handler);
     }
     off(event, handler) {
-        this.handlers.get(event)?.delete(handler);
+        var _a;
+        (_a = this.handlers.get(event)) === null || _a === void 0 ? void 0 : _a.delete(handler);
     }
     emit(event, data) {
-        this.handlers.get(event)?.forEach((handler) => handler(data));
+        var _a;
+        (_a = this.handlers.get(event)) === null || _a === void 0 ? void 0 : _a.forEach((handler) => handler(data));
     }
     clear() {
         this.handlers.clear();

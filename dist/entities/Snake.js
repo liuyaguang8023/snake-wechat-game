@@ -44,7 +44,7 @@ class Snake {
         return this.body.some((seg) => seg.row === pos.row && seg.col === pos.col);
     }
     cloneBody() {
-        return this.body.map((seg) => ({ ...seg }));
+        return this.body.map((seg) => (Object.assign({}, seg)));
     }
 }
 exports.Snake = Snake;

@@ -8,12 +8,13 @@ class GameLoop {
         this.running = false;
         this.updateFn = null;
         this.tick = () => {
+            var _a;
             if (!this.running)
                 return;
             const now = Date.now();
             const dt = Math.min((now - this.lastTime) / 1000, 0.1);
             this.lastTime = now;
-            this.updateFn?.(dt);
+            (_a = this.updateFn) === null || _a === void 0 ? void 0 : _a.call(this, dt);
             this.rafId = requestAnimationFrame(this.tick);
         };
     }

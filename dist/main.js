@@ -16,7 +16,7 @@ const cloud_1 = require("./api/cloud");
 const storage_1 = require("./utils/storage");
 const constants_1 = require("./utils/constants");
 // WeChat mini game canvas — screen-adaptive sizing
-const wx = globalThis.wx;
+const wx = typeof globalThis !== 'undefined' ? globalThis.wx : undefined;
 const canvas = wx ? wx.createCanvas() : null;
 let screenW = 375; // fallback
 let screenH = 667; // fallback
@@ -30,7 +30,7 @@ if (canvas && wx) {
     canvas.width = constants_1.GameConfig.CANVAS_WIDTH * dpr;
     canvas.height = (constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT) * dpr;
 }
-const ctx = canvas?.getContext('2d');
+const ctx = canvas === null || canvas === void 0 ? void 0 : canvas.getContext('2d');
 // Apply HiDPI pixel-ratio scaling only (no letterboxing)
 if (ctx && canvas && wx) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -51,7 +51,7 @@ if (canvas)
     inputManager.bind(canvas);
 // 初始化云开发（失败不影响游戏运行）
 try {
-    if (wx?.cloud) {
+    if (wx === null || wx === void 0 ? void 0 : wx.cloud) {
         wx.cloud.init({
             env: 'cloud1-d8gbfss9ob08cf382',
             traceUser: true,
@@ -62,18 +62,20 @@ catch (_e) {
     // 排行榜功能不可用，游戏正常运行
 }
 let buttons = [];
-// Touch click detection (separate from swipe)
-if (canvas) {
+// Touch click detection (uses WeChat wx.onTouch* API)
+if (wx) {
     let touchStartTime = 0;
     let touchStartX = 0;
     let touchStartY = 0;
-    canvas.addEventListener('touchstart', (e) => {
+    wx.onTouchStart((e) => {
         const touch = e.touches[0];
+        if (!touch)
+            return;
         touchStartTime = Date.now();
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
     });
-    canvas.addEventListener('touchend', (e) => {
+    wx.onTouchEnd((e) => {
         const touch = e.changedTouches[0];
         if (!touch)
             return;

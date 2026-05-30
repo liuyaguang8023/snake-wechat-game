@@ -10,7 +10,7 @@ class ResultScene {
         this.data = null;
     }
     onEnter(data) {
-        this.data = data ?? null;
+        this.data = data !== null && data !== void 0 ? data : null;
         if (!this.data)
             return;
         if (this.data.mode === GameScene_1.GameMode.Endless) {
@@ -26,7 +26,8 @@ class ResultScene {
         return this.data;
     }
     isLastLevelComplete() {
-        return this.data?.levelId === 10 && this.data?.mode === GameScene_1.GameMode.Level;
+        var _a, _b;
+        return ((_a = this.data) === null || _a === void 0 ? void 0 : _a.levelId) === 10 && ((_b = this.data) === null || _b === void 0 ? void 0 : _b.mode) === GameScene_1.GameMode.Level;
     }
     handleRestart() {
         if (!this.data)

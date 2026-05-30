@@ -20,6 +20,7 @@ var GameMode;
 })(GameMode || (exports.GameMode = GameMode = {}));
 class GameScene {
     constructor(sceneManager, data) {
+        var _a;
         this.sceneManager = sceneManager;
         this.obstacle = null;
         this.collisionSystem = new CollisionSystem_1.CollisionSystem();
@@ -34,7 +35,7 @@ class GameScene {
         this.won = false;
         this.fieldPowerUps = [];
         this.mode = data.mode;
-        this.levelId = data.levelId ?? 0;
+        this.levelId = (_a = data.levelId) !== null && _a !== void 0 ? _a : 0;
         if (this.mode === GameMode.Level) {
             const config = this.levelSystem.loadLevel(this.levelId);
             this.moveInterval = config.speed;
@@ -47,6 +48,7 @@ class GameScene {
         this.resetGame();
     }
     resetGame() {
+        var _a, _b, _c;
         const startRow = Math.floor(constants_1.GameConfig.GRID_ROWS / 2);
         const startCol = Math.floor(constants_1.GameConfig.GRID_COLS / 3);
         this.snake = new Snake_1.Snake({ row: startRow, col: startCol }, constants_1.INITIAL_SNAKE_LENGTH, constants_1.Direction.Right);
@@ -68,13 +70,14 @@ class GameScene {
         else {
             this.moveInterval = constants_1.SPEED_TIERS[0].interval;
         }
-        this.food.spawn([...this.snake.body, ...(this.obstacle?.positions ?? [])]);
-        this.effects.bind(context_1.GameContext.renderer?.ctx);
+        this.food.spawn([...this.snake.body, ...((_b = (_a = this.obstacle) === null || _a === void 0 ? void 0 : _a.positions) !== null && _b !== void 0 ? _b : [])]);
+        this.effects.bind((_c = context_1.GameContext.renderer) === null || _c === void 0 ? void 0 : _c.ctx);
     }
     onUpdate(dt) {
+        var _a;
         if (this.paused || this.gameOver || this.won)
             return;
-        const dir = context_1.GameContext.inputManager?.consumeDirection();
+        const dir = (_a = context_1.GameContext.inputManager) === null || _a === void 0 ? void 0 : _a.consumeDirection();
         if (dir)
             this.snake.setDirection(dir);
         this.powerUpSystem.update(dt);
@@ -95,13 +98,13 @@ class GameScene {
         if (ghosting) {
             const head = this.snake.head;
             if (head.row < 0)
-                this.snake.body[0] = { ...head, row: constants_1.GameConfig.GRID_ROWS - 1 };
+                this.snake.body[0] = Object.assign(Object.assign({}, head), { row: constants_1.GameConfig.GRID_ROWS - 1 });
             if (head.row >= constants_1.GameConfig.GRID_ROWS)
-                this.snake.body[0] = { ...head, row: 0 };
+                this.snake.body[0] = Object.assign(Object.assign({}, head), { row: 0 });
             if (head.col < 0)
-                this.snake.body[0] = { ...head, col: constants_1.GameConfig.GRID_COLS - 1 };
+                this.snake.body[0] = Object.assign(Object.assign({}, head), { col: constants_1.GameConfig.GRID_COLS - 1 });
             if (head.col >= constants_1.GameConfig.GRID_COLS)
-                this.snake.body[0] = { ...head, col: 0 };
+                this.snake.body[0] = Object.assign(Object.assign({}, head), { col: 0 });
         }
         const invincible = this.powerUpSystem.isInvincible();
         const wallHit = this.collisionSystem.checkWallCollision(this.snake);
@@ -122,7 +125,7 @@ class GameScene {
         // Check food collision
         const ateFood = this.collisionSystem.checkFoodCollision(this.snake, this.food.position);
         if (ateFood) {
-            this.snake.body.push({ ...tailBeforeMove }); // restore tail for growth
+            this.snake.body.push(Object.assign({}, tailBeforeMove)); // restore tail for growth
             this.scoreSystem.addFoodScore();
             this.effects.emitBurst(this.food.position, '#FFD700', 8);
             // Check level completion BEFORE spawning new food, so the last apple
@@ -153,14 +156,16 @@ class GameScene {
         this.scoreSystem.setMultiplier(this.powerUpSystem.getScoreMultiplier());
     }
     spawnFood() {
+        var _a, _b;
         const occupied = [
             ...this.snake.body,
-            ...(this.obstacle?.positions ?? []),
+            ...((_b = (_a = this.obstacle) === null || _a === void 0 ? void 0 : _a.positions) !== null && _b !== void 0 ? _b : []),
             ...this.fieldPowerUps.map((p) => p.pos),
         ];
         this.food.spawn(occupied);
     }
     trySpawnPowerUp() {
+        var _a, _b;
         if (this.fieldPowerUps.length >= constants_1.MAX_POWERUPS_ON_FIELD)
             return;
         if (this.scoreSystem.foodsEaten % constants_1.POWERUP_SPAWN_FOOD_COUNT !== 0)
@@ -169,7 +174,7 @@ class GameScene {
             return;
         const occupied = [
             ...this.snake.body,
-            ...(this.obstacle?.positions ?? []),
+            ...((_b = (_a = this.obstacle) === null || _a === void 0 ? void 0 : _a.positions) !== null && _b !== void 0 ? _b : []),
             this.food.position,
             ...this.fieldPowerUps.map((p) => p.pos),
         ];

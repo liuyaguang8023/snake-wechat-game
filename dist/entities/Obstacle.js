@@ -9,7 +9,7 @@ class Obstacle {
         return this.positions.some((o) => o.row === pos.row && o.col === pos.col);
     }
     static fromLayout(layout) {
-        return new Obstacle(layout.map((p) => ({ ...p })));
+        return new Obstacle(layout.map((p) => (Object.assign({}, p))));
     }
 }
 exports.Obstacle = Obstacle;
