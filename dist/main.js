@@ -47,6 +47,18 @@ if (ctx)
 // Bind swipe input
 if (canvas)
     inputManager.bind(canvas);
+// 初始化云开发（失败不影响游戏运行）
+try {
+    if (wx?.cloud) {
+        wx.cloud.init({
+            env: 'cloud1-d8gbfss9ob08cf382',
+            traceUser: true,
+        });
+    }
+}
+catch (_e) {
+    // 排行榜功能不可用，游戏正常运行
+}
 let buttons = [];
 // Touch click detection (separate from swipe)
 if (canvas) {
