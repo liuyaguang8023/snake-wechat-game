@@ -1,9 +1,20 @@
-// 网格配置
-export const GRID_ROWS = 20;
-export const GRID_COLS = 30;
-export const CELL_SIZE = 18;
-export const CANVAS_WIDTH = GRID_COLS * CELL_SIZE;   // 540
-export const CANVAS_HEIGHT = GRID_ROWS * CELL_SIZE;   // 360
+// 网格配置 — 运行时根据屏幕尺寸动态计算
+export const GameConfig = {
+  GRID_COLS: 30,              // 固定 30 列
+  GRID_ROWS: 20,              // 默认 20 行，运行时根据屏幕高度重新计算
+  CELL_SIZE: 18,              // 默认 18px，运行时根据屏幕宽度重新计算
+  CANVAS_WIDTH: 540,          // = GRID_COLS * CELL_SIZE
+  CANVAS_HEIGHT: 360,         // = GRID_ROWS * CELL_SIZE
+  HUD_HEIGHT: 30,             // HUD 区域固定 30px
+};
+
+/** 根据屏幕尺寸重新计算网格参数。在 main.ts 启动时调用一次。 */
+export function initDimensions(screenW: number, screenH: number): void {
+  GameConfig.CELL_SIZE = Math.floor(screenW / GameConfig.GRID_COLS);
+  GameConfig.CANVAS_WIDTH = GameConfig.GRID_COLS * GameConfig.CELL_SIZE;
+  GameConfig.GRID_ROWS = Math.floor((screenH - GameConfig.HUD_HEIGHT) / GameConfig.CELL_SIZE);
+  GameConfig.CANVAS_HEIGHT = GameConfig.GRID_ROWS * GameConfig.CELL_SIZE;
+}
 
 // 移动方向
 export enum Direction {

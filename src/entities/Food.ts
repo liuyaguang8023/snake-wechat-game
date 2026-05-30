@@ -1,5 +1,5 @@
 import { GridPos } from './Snake';
-import { GRID_ROWS, GRID_COLS } from '../utils/constants';
+import { GameConfig } from '../utils/constants';
 
 export class Food {
   position: GridPos = { row: 0, col: 0 };
@@ -9,8 +9,8 @@ export class Food {
       occupiedPositions.map((p) => `${p.row},${p.col}`)
     );
     const freeCells: GridPos[] = [];
-    for (let r = 0; r < GRID_ROWS; r++) {
-      for (let c = 0; c < GRID_COLS; c++) {
+    for (let r = 0; r < GameConfig.GRID_ROWS; r++) {
+      for (let c = 0; c < GameConfig.GRID_COLS; c++) {
         if (!occupiedSet.has(`${r},${c}`)) {
           freeCells.push({ row: r, col: c });
         }

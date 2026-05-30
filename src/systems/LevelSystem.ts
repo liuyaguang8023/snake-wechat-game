@@ -1,6 +1,6 @@
 import { LEVELS, LevelConfig } from '../data/levels';
 import { Storage } from '../utils/storage';
-import { STORAGE_KEYS } from '../utils/constants';
+import { GameConfig, STORAGE_KEYS } from '../utils/constants';
 
 export class LevelSystem {
   unlockedLevel: number;
@@ -12,7 +12,17 @@ export class LevelSystem {
   }
 
   loadLevel(id: number): LevelConfig {
-    return LEVELS.find((l) => l.id === id) ?? LEVELS[0];
+    const level = LEVELS.find((l) => l.id === id) ?? LEVELS[0];
+    // 如果网格行数不是原始的 20 行，按比例重映射障碍物行位置
+    if (GameConfig.GRID_ROWS !== 20) {
+      const scale = GameConfig.GRID_ROWS / 20;
+      const remappedObstacles = level.obstacles.map((o) => ({
+        row: Math.min(Math.floor(o.row * scale), GameConfig.GRID_ROWS - 1),
+        col: o.col,
+      }));
+      return { ...level, obstacles: remappedObstacles };
+    }
+    return level;
   }
 
   isUnlocked(id: number): boolean {

@@ -10,7 +10,8 @@ import { EventBus } from '../core/EventBus';
 import { Effects } from '../render/Effects';
 import { GameContext } from '../core/context';
 import {
-  Direction, GRID_ROWS, GRID_COLS, INITIAL_SNAKE_LENGTH,
+  GameConfig,
+  Direction, INITIAL_SNAKE_LENGTH,
   MAX_POWERUPS_ON_FIELD, POWERUP_SPAWN_FOOD_COUNT, POWERUP_SPAWN_CHANCE,
   SPEED_TIERS,
 } from '../utils/constants';
@@ -68,8 +69,8 @@ export class GameScene implements Scene {
   }
 
   private resetGame(): void {
-    const startRow = Math.floor(GRID_ROWS / 2);
-    const startCol = Math.floor(GRID_COLS / 3);
+    const startRow = Math.floor(GameConfig.GRID_ROWS / 2);
+    const startCol = Math.floor(GameConfig.GRID_COLS / 3);
     this.snake = new Snake({ row: startRow, col: startCol }, INITIAL_SNAKE_LENGTH, Direction.Right);
     this.food = new Food();
     this.obstacle = null;
@@ -122,10 +123,10 @@ export class GameScene implements Scene {
 
     if (ghosting) {
       const head = this.snake.head;
-      if (head.row < 0) this.snake.body[0] = { ...head, row: GRID_ROWS - 1 };
-      if (head.row >= GRID_ROWS) this.snake.body[0] = { ...head, row: 0 };
-      if (head.col < 0) this.snake.body[0] = { ...head, col: GRID_COLS - 1 };
-      if (head.col >= GRID_COLS) this.snake.body[0] = { ...head, col: 0 };
+      if (head.row < 0) this.snake.body[0] = { ...head, row: GameConfig.GRID_ROWS - 1 };
+      if (head.row >= GameConfig.GRID_ROWS) this.snake.body[0] = { ...head, row: 0 };
+      if (head.col < 0) this.snake.body[0] = { ...head, col: GameConfig.GRID_COLS - 1 };
+      if (head.col >= GameConfig.GRID_COLS) this.snake.body[0] = { ...head, col: 0 };
     }
 
     const invincible = this.powerUpSystem.isInvincible();
@@ -155,6 +156,17 @@ export class GameScene implements Scene {
       this.snake.body.push({ ...tailBeforeMove }); // restore tail for growth
       this.scoreSystem.addFoodScore();
       this.effects.emitBurst(this.food.position, '#FFD700', 8);
+
+      // Check level completion BEFORE spawning new food, so the last apple
+      // doesn't flash a new one on screen before the result scene
+      if (this.mode === GameMode.Level) {
+        const config = this.levelSystem.loadLevel(this.levelId);
+        if (this.scoreSystem.foodsEaten >= config.target) {
+          this.handleWin();
+          return;
+        }
+      }
+
       this.spawnFood();
       this.trySpawnPowerUp();
       this.updateSpeed();
@@ -174,14 +186,6 @@ export class GameScene implements Scene {
 
     // Update score multiplier from power-ups
     this.scoreSystem.setMultiplier(this.powerUpSystem.getScoreMultiplier());
-
-    // Check level completion
-    if (this.mode === GameMode.Level) {
-      const config = this.levelSystem.loadLevel(this.levelId);
-      if (this.scoreSystem.foodsEaten >= config.target) {
-        this.handleWin();
-      }
-    }
   }
 
   private spawnFood(): void {
@@ -215,8 +219,8 @@ export class GameScene implements Scene {
 
     const occupiedSet = new Set(occupied.map((p) => `${p.row},${p.col}`));
     const freeCells: GridPos[] = [];
-    for (let r = 0; r < GRID_ROWS; r++) {
-      for (let c = 0; c < GRID_COLS; c++) {
+    for (let r = 0; r < GameConfig.GRID_ROWS; r++) {
+      for (let c = 0; c < GameConfig.GRID_COLS; c++) {
         if (!occupiedSet.has(`${r},${c}`)) {
           freeCells.push({ row: r, col: c });
         }

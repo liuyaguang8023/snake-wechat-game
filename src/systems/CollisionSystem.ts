@@ -1,6 +1,6 @@
 import { Snake, GridPos } from '../entities/Snake';
 import { Obstacle } from '../entities/Obstacle';
-import { GRID_ROWS, GRID_COLS } from '../utils/constants';
+import { GameConfig } from '../utils/constants';
 
 export enum CollisionType {
   None = 'None',
@@ -25,7 +25,7 @@ export class CollisionSystem {
 
   checkWallCollision(snake: Snake): boolean {
     const { row, col } = snake.head;
-    return row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS;
+    return row < 0 || row >= GameConfig.GRID_ROWS || col < 0 || col >= GameConfig.GRID_COLS;
   }
 
   checkSelfCollision(snake: Snake): boolean {

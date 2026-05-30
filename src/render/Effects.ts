@@ -1,5 +1,5 @@
 import { GridPos } from '../entities/Snake';
-import { CELL_SIZE } from '../utils/constants';
+import { GameConfig } from '../utils/constants';
 
 interface Particle {
   x: number;
@@ -20,8 +20,8 @@ export class Effects {
   }
 
   emitBurst(pos: GridPos, color: string, count: number = 8): void {
-    const cx = pos.col * CELL_SIZE + CELL_SIZE / 2;
-    const cy = pos.row * CELL_SIZE + CELL_SIZE / 2;
+    const cx = pos.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+    const cy = pos.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
       const speed = 20 + Math.random() * 40;

@@ -1,6 +1,6 @@
 import { GridPos, Snake } from '../entities/Snake';
 import { Obstacle } from '../entities/Obstacle';
-import { Direction, Colors, CELL_SIZE, GRID_ROWS, GRID_COLS } from '../utils/constants';
+import { Direction, Colors, GameConfig } from '../utils/constants';
 
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
@@ -22,9 +22,9 @@ export class Renderer {
   private drawGrid(): void {
     this.ctx.strokeStyle = Colors.grid;
     this.ctx.lineWidth = 0.5;
-    for (let r = 0; r < GRID_ROWS; r++) {
-      for (let c = 0; c < GRID_COLS; c++) {
-        this.ctx.strokeRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+    for (let r = 0; r < GameConfig.GRID_ROWS; r++) {
+      for (let c = 0; c < GameConfig.GRID_COLS; c++) {
+        this.ctx.strokeRect(c * GameConfig.CELL_SIZE, r * GameConfig.CELL_SIZE, GameConfig.CELL_SIZE, GameConfig.CELL_SIZE);
       }
     }
   }
@@ -32,8 +32,8 @@ export class Renderer {
   drawSnake(snake: Snake, ghosting: boolean): void {
     this.ctx.globalAlpha = ghosting ? 0.5 : 1;
     snake.body.forEach((seg, i) => {
-      const x = seg.col * CELL_SIZE;
-      const y = seg.row * CELL_SIZE;
+      const x = seg.col * GameConfig.CELL_SIZE;
+      const y = seg.row * GameConfig.CELL_SIZE;
       const radius = 4;
       const padding = 1;
 
@@ -45,7 +45,7 @@ export class Renderer {
         this.ctx.fillStyle = Colors.snakeBody;
       }
 
-      this.roundRect(x + padding, y + padding, CELL_SIZE - padding * 2, CELL_SIZE - padding * 2, radius);
+      this.roundRect(x + padding, y + padding, GameConfig.CELL_SIZE - padding * 2, GameConfig.CELL_SIZE - padding * 2, radius);
       this.ctx.fill();
 
       if (i === 0) {
@@ -56,8 +56,8 @@ export class Renderer {
   }
 
   private drawEyes(head: GridPos, direction: Direction): void {
-    const cx = head.col * CELL_SIZE + CELL_SIZE / 2;
-    const cy = head.row * CELL_SIZE + CELL_SIZE / 2;
+    const cx = head.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+    const cy = head.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
     const eyeR = 2;
     this.ctx.fillStyle = '#FFFFFF';
 
@@ -84,9 +84,10 @@ export class Renderer {
   }
 
   drawFood(position: GridPos): void {
-    const x = position.col * CELL_SIZE + CELL_SIZE / 2;
-    const y = position.row * CELL_SIZE + CELL_SIZE / 2;
-    this.ctx.font = `${CELL_SIZE - 2}px sans-serif`;
+    const x = position.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+    const y = position.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+    const emojiSize = Math.max(GameConfig.CELL_SIZE + 4, 16);
+    this.ctx.font = `${emojiSize}px sans-serif`;
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
     this.ctx.fillText('🍎', x, y);
@@ -94,19 +95,20 @@ export class Renderer {
 
   drawObstacles(obstacle: Obstacle): void {
     obstacle.positions.forEach((pos) => {
-      const x = pos.col * CELL_SIZE + 2;
-      const y = pos.row * CELL_SIZE + 2;
+      const x = pos.col * GameConfig.CELL_SIZE + 2;
+      const y = pos.row * GameConfig.CELL_SIZE + 2;
       this.ctx.fillStyle = Colors.obstacle;
-      this.roundRect(x, y, CELL_SIZE - 4, CELL_SIZE - 4, 3);
+      this.roundRect(x, y, GameConfig.CELL_SIZE - 4, GameConfig.CELL_SIZE - 4, 3);
       this.ctx.fill();
     });
   }
 
   drawPowerUps(positions: { pos: GridPos; def: { icon: string } }[]): void {
     positions.forEach(({ pos, def }) => {
-      const x = pos.col * CELL_SIZE + CELL_SIZE / 2;
-      const y = pos.row * CELL_SIZE + CELL_SIZE / 2;
-      this.ctx.font = `${CELL_SIZE - 2}px sans-serif`;
+      const x = pos.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+      const y = pos.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+      const emojiSize = Math.max(GameConfig.CELL_SIZE + 4, 16);
+      this.ctx.font = `${emojiSize}px sans-serif`;
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';
       this.ctx.fillText(def.icon, x, y);
@@ -114,19 +116,24 @@ export class Renderer {
   }
 
   drawHUD(score: number, levelName: string | null, remaining: number | null, paused: boolean): void {
+    // 清除 HUD 区域
+    const hudY = GameConfig.CELL_SIZE * GameConfig.GRID_ROWS;
+    this.ctx.fillStyle = Colors.background;
+    this.ctx.fillRect(0, hudY, this.width, GameConfig.HUD_HEIGHT);
+
     this.ctx.fillStyle = Colors.hudText;
     this.ctx.font = '14px sans-serif';
     this.ctx.textAlign = 'left';
-    this.ctx.fillText(`分数: ${score}`, 8, CELL_SIZE * GRID_ROWS + 18);
+    this.ctx.fillText(`分数: ${score}`, 8, hudY + 18);
 
     if (levelName) {
       this.ctx.textAlign = 'center';
-      this.ctx.fillText(`${levelName}`, CELL_SIZE * GRID_COLS / 2, CELL_SIZE * GRID_ROWS + 18);
+      this.ctx.fillText(`${levelName}`, GameConfig.CELL_SIZE * GameConfig.GRID_COLS / 2, hudY + 18);
     }
 
     if (remaining !== null) {
       this.ctx.textAlign = 'right';
-      this.ctx.fillText(`剩余: ${remaining}`, CELL_SIZE * GRID_COLS - 8, CELL_SIZE * GRID_ROWS + 18);
+      this.ctx.fillText(`剩余: ${remaining}`, GameConfig.CELL_SIZE * GameConfig.GRID_COLS - 8, hudY + 18);
     }
 
     if (paused) {
