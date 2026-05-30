@@ -27,6 +27,7 @@
     }
   },
   "appid": "",
+  "cloudfunctionRoot": "cloud/",
   "projectname": "snake-game",
   "condition": {},
   "simulatorPluginLibVersion": {},

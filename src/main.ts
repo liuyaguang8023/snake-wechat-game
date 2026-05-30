@@ -9,6 +9,8 @@ import { GameScene, GameMode } from './scenes/GameScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { ResultScene } from './scenes/ResultScene';
 import { SettingsScene } from './scenes/SettingsScene';
+import { LeaderboardScene } from './scenes/LeaderboardScene';
+import { CloudAPI } from './api/cloud';
 import { Storage } from './utils/storage';
 import { GameConfig, initDimensions, STORAGE_KEYS } from './utils/constants';
 
@@ -119,13 +121,17 @@ gameLoop.start((dt) => {
       const scoreSystem = current.getScoreSystem();
       const mode = current.getMode();
       const levelId = current.getLevelId();
+      const score = scoreSystem.score;
       const resultScene = new ResultScene(sceneManager);
       sceneManager.switchTo(resultScene, {
         mode,
-        score: scoreSystem.score,
+        score,
         levelId,
         stars: scoreSystem.ratingStars,
       });
+      // 游戏结束后自动上传分数到云端排行榜
+      const modeStr = mode === GameMode.Endless ? 'endless' : 'level';
+      CloudAPI.uploadScore(score, modeStr);
       currentGameScene = null;
     }
   } else if (current instanceof MenuScene) {
@@ -136,6 +142,8 @@ gameLoop.start((dt) => {
     renderResult(current);
   } else if (current instanceof SettingsScene) {
     renderSettings();
+  } else if (current instanceof LeaderboardScene) {
+    renderLeaderboard(current);
   }
 });
 
@@ -180,17 +188,21 @@ function renderMenu(): void {
   ctx.font = '14px sans-serif';
   ctx.fillText(`最高分: ${bestScore}`, GameConfig.CANVAS_WIDTH / 2, 170);
 
-  const btnW = 160, btnH = 44, startY = 210, gap = 56;
+  const btnW = 160, btnH = 40, startY = 200, gap = 50;
   drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY, btnW, btnH, '无尽模式', '#FFB300');
   drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap, btnW, btnH, '关卡模式', '#66BB6A');
-  drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 2, btnW, btnH, '设置', '#42A5F5');
+  drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 2, btnW, btnH, '排行榜', '#AB47BC');
+  drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 3, btnW, btnH, '设置', '#42A5F5');
 
   buttons = [
     { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY, w: btnW, h: btnH, label: '无尽', action: startEndless },
     { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap, w: btnW, h: btnH, label: '关卡', action: () => {
       sceneManager.switchTo(new LevelSelectScene(sceneManager));
     }},
-    { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 2, w: btnW, h: btnH, label: '设置', action: () => {
+    { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 2, w: btnW, h: btnH, label: '排行榜', action: () => {
+      sceneManager.switchTo(new LeaderboardScene(sceneManager));
+    }},
+    { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 3, w: btnW, h: btnH, label: '设置', action: () => {
       sceneManager.switchTo(new SettingsScene(sceneManager));
     }},
   ];
@@ -337,5 +349,90 @@ function renderSettings(): void {
     { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 180, w: 120, h: 40, label: 'Back', action: () => {
       sceneManager.switchTo(new MenuScene(sceneManager));
     }},
+  ];
+}
+
+function renderLeaderboard(scene: LeaderboardScene): void {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+  ctx.fillStyle = '#FFFDE7';
+  ctx.fillRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+
+  ctx.fillStyle = '#5D4037';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('无尽模式排行榜', GameConfig.CANVAS_WIDTH / 2, 32);
+
+  if (scene.isLoading()) {
+    ctx.font = '14px sans-serif';
+    ctx.fillText('加载中...', GameConfig.CANVAS_WIDTH / 2, 80);
+    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
+    buttons = [
+      { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
+    ];
+    return;
+  }
+
+  if (scene.hasError()) {
+    ctx.font = '14px sans-serif';
+    ctx.fillText('加载失败，请检查网络', GameConfig.CANVAS_WIDTH / 2, 80);
+    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
+    buttons = [
+      { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
+    ];
+    return;
+  }
+
+  const list = scene.getList();
+  if (list.length === 0) {
+    ctx.font = '14px sans-serif';
+    ctx.fillText('暂无排行数据', GameConfig.CANVAS_WIDTH / 2, 80);
+    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
+    buttons = [
+      { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
+    ];
+    return;
+  }
+
+  // Draw table header
+  const tableStartY = 56;
+  const rowH = 28;
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = '#5D4037';
+  ctx.textAlign = 'left';
+  ctx.fillText('排名', 20, tableStartY);
+  ctx.fillText('分数', GameConfig.CANVAS_WIDTH / 2, tableStartY);
+  ctx.textAlign = 'right';
+  ctx.fillText('玩家', GameConfig.CANVAS_WIDTH - 20, tableStartY);
+
+  // Header separator line
+  ctx.strokeStyle = '#BDBDBD';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(12, tableStartY + 6);
+  ctx.lineTo(GameConfig.CANVAS_WIDTH - 12, tableStartY + 6);
+  ctx.stroke();
+
+  // Draw rows
+  const maxRows = Math.min(list.length, 20);
+  ctx.font = '12px sans-serif';
+  for (let i = 0; i < maxRows; i++) {
+    const item = list[i];
+    const y = tableStartY + 14 + (i + 1) * rowH;
+    const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+
+    ctx.textAlign = 'left';
+    ctx.fillText(`${rankEmoji}`, 20, y);
+    ctx.fillText(`${item.score}`, GameConfig.CANVAS_WIDTH / 2, y);
+    ctx.textAlign = 'right';
+    // 显示 openid 前 6 位
+    const uid = item.openid ? item.openid.substring(0, 6) : '???';
+    ctx.fillText(uid, GameConfig.CANVAS_WIDTH - 20, y);
+  }
+
+  const btnY = tableStartY + (maxRows + 1) * rowH + 20;
+  drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, btnY, 120, 40, '返回', '#9E9E9E');
+  buttons = [
+    { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: btnY, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
   ];
 }
