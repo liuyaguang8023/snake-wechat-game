@@ -33,7 +33,7 @@
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [],
-    "include": []
+    "include": ["dist/**/*"]
   },
   "isGameTourist": false,
   "editorSetting": {}
