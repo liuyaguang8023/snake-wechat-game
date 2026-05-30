@@ -1,5 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.INITIAL_SNAKE_LENGTH = exports.STORAGE_KEYS = exports.MAX_POWERUPS_ON_FIELD = exports.POWERUP_SPAWN_CHANCE = exports.POWERUP_SPAWN_FOOD_COUNT = exports.SPEED_TIERS = exports.Colors = exports.OppositeDirection = exports.DirectionVectors = exports.Direction = exports.GameConfig = void 0;
+exports.initDimensions = initDimensions;
 // 网格配置 — 运行时根据屏幕尺寸动态计算
-export const GameConfig = {
+exports.GameConfig = {
     GRID_COLS: 30, // 固定 30 列
     GRID_ROWS: 20, // 默认 20 行，运行时根据屏幕高度重新计算
     CELL_SIZE: 18, // 默认 18px，运行时根据屏幕宽度重新计算
@@ -8,34 +12,34 @@ export const GameConfig = {
     HUD_HEIGHT: 30, // HUD 区域固定 30px
 };
 /** 根据屏幕尺寸重新计算网格参数。在 main.ts 启动时调用一次。 */
-export function initDimensions(screenW, screenH) {
-    GameConfig.CELL_SIZE = Math.floor(screenW / GameConfig.GRID_COLS);
-    GameConfig.CANVAS_WIDTH = GameConfig.GRID_COLS * GameConfig.CELL_SIZE;
-    GameConfig.GRID_ROWS = Math.floor((screenH - GameConfig.HUD_HEIGHT) / GameConfig.CELL_SIZE);
-    GameConfig.CANVAS_HEIGHT = GameConfig.GRID_ROWS * GameConfig.CELL_SIZE;
+function initDimensions(screenW, screenH) {
+    exports.GameConfig.CELL_SIZE = Math.floor(screenW / exports.GameConfig.GRID_COLS);
+    exports.GameConfig.CANVAS_WIDTH = exports.GameConfig.GRID_COLS * exports.GameConfig.CELL_SIZE;
+    exports.GameConfig.GRID_ROWS = Math.floor((screenH - exports.GameConfig.HUD_HEIGHT) / exports.GameConfig.CELL_SIZE);
+    exports.GameConfig.CANVAS_HEIGHT = exports.GameConfig.GRID_ROWS * exports.GameConfig.CELL_SIZE;
 }
 // 移动方向
-export var Direction;
+var Direction;
 (function (Direction) {
     Direction["Up"] = "UP";
     Direction["Down"] = "DOWN";
     Direction["Left"] = "LEFT";
     Direction["Right"] = "RIGHT";
-})(Direction || (Direction = {}));
-export const DirectionVectors = {
+})(Direction || (exports.Direction = Direction = {}));
+exports.DirectionVectors = {
     [Direction.Up]: { row: -1, col: 0 },
     [Direction.Down]: { row: 1, col: 0 },
     [Direction.Left]: { row: 0, col: -1 },
     [Direction.Right]: { row: 0, col: 1 },
 };
-export const OppositeDirection = {
+exports.OppositeDirection = {
     [Direction.Up]: Direction.Down,
     [Direction.Down]: Direction.Up,
     [Direction.Left]: Direction.Right,
     [Direction.Right]: Direction.Left,
 };
 // 颜色（Emoji 可爱风）
-export const Colors = {
+exports.Colors = {
     snakeHead: '#FF8F00',
     snakeBody: '#FFB300',
     snakeTail: '#FFCA28',
@@ -47,7 +51,7 @@ export const Colors = {
     powerUpGlow: '#FFD700',
 };
 // 难度（无尽模式）
-export const SPEED_TIERS = [
+exports.SPEED_TIERS = [
     { maxScore: 50, interval: 200 },
     { maxScore: 100, interval: 150 },
     { maxScore: 200, interval: 120 },
@@ -55,16 +59,16 @@ export const SPEED_TIERS = [
     { maxScore: Infinity, interval: 70 },
 ];
 // 道具刷新：每 N 个食物有概率出现道具
-export const POWERUP_SPAWN_FOOD_COUNT = 5;
-export const POWERUP_SPAWN_CHANCE = 0.4;
-export const MAX_POWERUPS_ON_FIELD = 2;
+exports.POWERUP_SPAWN_FOOD_COUNT = 5;
+exports.POWERUP_SPAWN_CHANCE = 0.4;
+exports.MAX_POWERUPS_ON_FIELD = 2;
 // 存储 key
-export const STORAGE_KEYS = {
+exports.STORAGE_KEYS = {
     bestScoreEndless: 'best_score_endless',
     levelStars: 'level_stars',
     unlockedLevel: 'unlocked_level',
     settingsSound: 'settings_sound',
 };
 // 初始蛇身长度
-export const INITIAL_SNAKE_LENGTH = 3;
+exports.INITIAL_SNAKE_LENGTH = 3;
 //# sourceMappingURL=constants.js.map

@@ -1,4 +1,7 @@
-export class EventBus {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EventBus = void 0;
+class EventBus {
     constructor() {
         this.handlers = new Map();
     }
@@ -18,4 +21,5 @@ export class EventBus {
         this.handlers.clear();
     }
 }
+exports.EventBus = EventBus;
 //# sourceMappingURL=EventBus.js.map

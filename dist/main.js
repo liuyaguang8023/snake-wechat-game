@@ -1,18 +1,20 @@
-import { GameLoop } from './core/GameLoop';
-import { SceneManager } from './core/SceneManager';
-import { InputManager } from './core/InputManager';
-import { Renderer } from './render/Renderer';
-import { Effects } from './render/Effects';
-import { GameContext } from './core/context';
-import { MenuScene } from './scenes/MenuScene';
-import { GameScene, GameMode } from './scenes/GameScene';
-import { LevelSelectScene } from './scenes/LevelSelectScene';
-import { ResultScene } from './scenes/ResultScene';
-import { SettingsScene } from './scenes/SettingsScene';
-import { LeaderboardScene } from './scenes/LeaderboardScene';
-import { CloudAPI } from './api/cloud';
-import { Storage } from './utils/storage';
-import { GameConfig, initDimensions, STORAGE_KEYS } from './utils/constants';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const GameLoop_1 = require("./core/GameLoop");
+const SceneManager_1 = require("./core/SceneManager");
+const InputManager_1 = require("./core/InputManager");
+const Renderer_1 = require("./render/Renderer");
+const Effects_1 = require("./render/Effects");
+const context_1 = require("./core/context");
+const MenuScene_1 = require("./scenes/MenuScene");
+const GameScene_1 = require("./scenes/GameScene");
+const LevelSelectScene_1 = require("./scenes/LevelSelectScene");
+const ResultScene_1 = require("./scenes/ResultScene");
+const SettingsScene_1 = require("./scenes/SettingsScene");
+const LeaderboardScene_1 = require("./scenes/LeaderboardScene");
+const cloud_1 = require("./api/cloud");
+const storage_1 = require("./utils/storage");
+const constants_1 = require("./utils/constants");
 // WeChat mini game canvas — screen-adaptive sizing
 const wx = globalThis.wx;
 const canvas = wx ? wx.createCanvas() : null;
@@ -24,24 +26,24 @@ if (canvas && wx) {
     dpr = sysInfo.pixelRatio || 1;
     screenW = sysInfo.windowWidth;
     screenH = sysInfo.windowHeight;
-    initDimensions(screenW, screenH);
-    canvas.width = GameConfig.CANVAS_WIDTH * dpr;
-    canvas.height = (GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT) * dpr;
+    (0, constants_1.initDimensions)(screenW, screenH);
+    canvas.width = constants_1.GameConfig.CANVAS_WIDTH * dpr;
+    canvas.height = (constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT) * dpr;
 }
 const ctx = canvas?.getContext('2d');
 // Apply HiDPI pixel-ratio scaling only (no letterboxing)
 if (ctx && canvas && wx) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-const renderer = ctx ? new Renderer(ctx, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT) : null;
-const inputManager = new InputManager();
-const effects = new Effects();
-const sceneManager = new SceneManager();
-const gameLoop = new GameLoop();
+const renderer = ctx ? new Renderer_1.Renderer(ctx, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT) : null;
+const inputManager = new InputManager_1.InputManager();
+const effects = new Effects_1.Effects();
+const sceneManager = new SceneManager_1.SceneManager();
+const gameLoop = new GameLoop_1.GameLoop();
 // Wire up GameContext
 if (renderer)
-    GameContext.renderer = renderer;
-GameContext.inputManager = inputManager;
+    context_1.GameContext.renderer = renderer;
+context_1.GameContext.inputManager = inputManager;
 if (ctx)
     effects.bind(ctx);
 // Bind swipe input
@@ -81,8 +83,8 @@ if (canvas) {
         // Only treat as click if short duration and minimal movement
         if (dt < 300 && dx < 20 && dy < 20) {
             // Convert screen coordinates to game coordinates
-            const scaleX = GameConfig.CANVAS_WIDTH / screenW;
-            const scaleY = (GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT) / screenH;
+            const scaleX = constants_1.GameConfig.CANVAS_WIDTH / screenW;
+            const scaleY = (constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT) / screenH;
             const gx = touch.clientX * scaleX;
             const gy = touch.clientY * scaleY;
             buttons.forEach((btn) => {
@@ -95,14 +97,14 @@ if (canvas) {
     });
 }
 // Start with menu
-const menuScene = new MenuScene(sceneManager);
+const menuScene = new MenuScene_1.MenuScene(sceneManager);
 let currentGameScene = null;
 sceneManager.switchTo(menuScene);
 // Main game loop
 gameLoop.start((dt) => {
     sceneManager.update(dt);
     const current = sceneManager.getCurrentScene();
-    if (current instanceof GameScene) {
+    if (current instanceof GameScene_1.GameScene) {
         currentGameScene = current;
         // GameScene's onUpdate handles its own rendering
         current.onUpdate(dt);
@@ -112,7 +114,7 @@ gameLoop.start((dt) => {
             const mode = current.getMode();
             const levelId = current.getLevelId();
             const score = scoreSystem.score;
-            const resultScene = new ResultScene(sceneManager);
+            const resultScene = new ResultScene_1.ResultScene(sceneManager);
             sceneManager.switchTo(resultScene, {
                 mode,
                 score,
@@ -120,24 +122,24 @@ gameLoop.start((dt) => {
                 stars: scoreSystem.ratingStars,
             });
             // 游戏结束后自动上传分数到云端排行榜
-            const modeStr = mode === GameMode.Endless ? 'endless' : 'level';
-            CloudAPI.uploadScore(score, modeStr);
+            const modeStr = mode === GameScene_1.GameMode.Endless ? 'endless' : 'level';
+            cloud_1.CloudAPI.uploadScore(score, modeStr);
             currentGameScene = null;
         }
     }
-    else if (current instanceof MenuScene) {
+    else if (current instanceof MenuScene_1.MenuScene) {
         renderMenu();
     }
-    else if (current instanceof LevelSelectScene) {
+    else if (current instanceof LevelSelectScene_1.LevelSelectScene) {
         renderLevelSelect(current);
     }
-    else if (current instanceof ResultScene) {
+    else if (current instanceof ResultScene_1.ResultScene) {
         renderResult(current);
     }
-    else if (current instanceof SettingsScene) {
+    else if (current instanceof SettingsScene_1.SettingsScene) {
         renderSettings();
     }
-    else if (current instanceof LeaderboardScene) {
+    else if (current instanceof LeaderboardScene_1.LeaderboardScene) {
         renderLeaderboard(current);
     }
 });
@@ -166,54 +168,54 @@ function drawButton(x, y, w, h, text, color) {
 function renderMenu() {
     if (!ctx)
         return;
-    ctx.clearRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.clearRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#FFFDE7';
-    ctx.fillRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.fillRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#5D4037';
     ctx.font = 'bold 28px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('\u{1F40D} 贪吃蛇', GameConfig.CANVAS_WIDTH / 2, 60);
+    ctx.fillText('\u{1F40D} 贪吃蛇', constants_1.GameConfig.CANVAS_WIDTH / 2, 60);
     ctx.font = '48px sans-serif';
-    ctx.fillText('\u{1F40D}', GameConfig.CANVAS_WIDTH / 2, 130);
-    const bestScore = Storage.get(STORAGE_KEYS.bestScoreEndless, 0);
+    ctx.fillText('\u{1F40D}', constants_1.GameConfig.CANVAS_WIDTH / 2, 130);
+    const bestScore = storage_1.Storage.get(constants_1.STORAGE_KEYS.bestScoreEndless, 0);
     ctx.font = '14px sans-serif';
-    ctx.fillText(`最高分: ${bestScore}`, GameConfig.CANVAS_WIDTH / 2, 170);
+    ctx.fillText(`最高分: ${bestScore}`, constants_1.GameConfig.CANVAS_WIDTH / 2, 170);
     const btnW = 160, btnH = 40, startY = 200, gap = 50;
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY, btnW, btnH, '无尽模式', '#FFB300');
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap, btnW, btnH, '关卡模式', '#66BB6A');
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 2, btnW, btnH, '排行榜', '#AB47BC');
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 3, btnW, btnH, '设置', '#42A5F5');
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY, btnW, btnH, '无尽模式', '#FFB300');
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap, btnW, btnH, '关卡模式', '#66BB6A');
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 2, btnW, btnH, '排行榜', '#AB47BC');
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, startY + gap * 3, btnW, btnH, '设置', '#42A5F5');
     buttons = [
-        { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY, w: btnW, h: btnH, label: '无尽', action: startEndless },
-        { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap, w: btnW, h: btnH, label: '关卡', action: () => {
-                sceneManager.switchTo(new LevelSelectScene(sceneManager));
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY, w: btnW, h: btnH, label: '无尽', action: startEndless },
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap, w: btnW, h: btnH, label: '关卡', action: () => {
+                sceneManager.switchTo(new LevelSelectScene_1.LevelSelectScene(sceneManager));
             } },
-        { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 2, w: btnW, h: btnH, label: '排行榜', action: () => {
-                sceneManager.switchTo(new LeaderboardScene(sceneManager));
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 2, w: btnW, h: btnH, label: '排行榜', action: () => {
+                sceneManager.switchTo(new LeaderboardScene_1.LeaderboardScene(sceneManager));
             } },
-        { x: GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 3, w: btnW, h: btnH, label: '设置', action: () => {
-                sceneManager.switchTo(new SettingsScene(sceneManager));
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - btnW / 2, y: startY + gap * 3, w: btnW, h: btnH, label: '设置', action: () => {
+                sceneManager.switchTo(new SettingsScene_1.SettingsScene(sceneManager));
             } },
     ];
 }
 function startEndless() {
-    const gameScene = new GameScene(sceneManager, { mode: GameMode.Endless });
+    const gameScene = new GameScene_1.GameScene(sceneManager, { mode: GameScene_1.GameMode.Endless });
     sceneManager.switchTo(gameScene);
 }
 function renderLevelSelect(scene) {
     if (!ctx)
         return;
-    ctx.clearRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.clearRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#FFFDE7';
-    ctx.fillRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.fillRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#5D4037';
     ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('关卡选择', GameConfig.CANVAS_WIDTH / 2, 36);
+    ctx.fillText('关卡选择', constants_1.GameConfig.CANVAS_WIDTH / 2, 36);
     const ls = scene.getLevelSystem();
     const cols = 2, rows = 5;
     const cardW = 120, cardH = 70, gapX = 20, gapY = 16;
-    const startX = (GameConfig.CANVAS_WIDTH - (cols * cardW + (cols - 1) * gapX)) / 2;
+    const startX = (constants_1.GameConfig.CANVAS_WIDTH - (cols * cardW + (cols - 1) * gapX)) / 2;
     const startY = 60;
     const btns = [];
     for (let i = 0; i < 10; i++) {
@@ -252,18 +254,18 @@ function renderLevelSelect(scene) {
         }
     }
     const backY = startY + rows * (cardH + gapY) + 10;
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, backY, 120, 36, '返回', '#9E9E9E');
-    btns.push({ x: GameConfig.CANVAS_WIDTH / 2 - 60, y: backY, w: 120, h: 36, label: 'Back', action: () => {
-            sceneManager.switchTo(new MenuScene(sceneManager));
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, backY, 120, 36, '返回', '#9E9E9E');
+    btns.push({ x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: backY, w: 120, h: 36, label: 'Back', action: () => {
+            sceneManager.switchTo(new MenuScene_1.MenuScene(sceneManager));
         } });
     buttons = btns;
 }
 function renderResult(scene) {
     if (!ctx)
         return;
-    ctx.clearRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.clearRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#FFFDE7';
-    ctx.fillRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.fillRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     const data = scene.getData();
     if (!data)
         return;
@@ -271,90 +273,90 @@ function renderResult(scene) {
     ctx.font = 'bold 24px sans-serif';
     ctx.textAlign = 'center';
     const btnY = 210;
-    if (data.mode === GameMode.Level && data.stars && data.stars > 0) {
-        ctx.fillText('🎉 通关!', GameConfig.CANVAS_WIDTH / 2, 50);
+    if (data.mode === GameScene_1.GameMode.Level && data.stars && data.stars > 0) {
+        ctx.fillText('🎉 通关!', constants_1.GameConfig.CANVAS_WIDTH / 2, 50);
         ctx.font = '18px sans-serif';
-        ctx.fillText(`分数: ${data.score}`, GameConfig.CANVAS_WIDTH / 2, 90);
+        ctx.fillText(`分数: ${data.score}`, constants_1.GameConfig.CANVAS_WIDTH / 2, 90);
         ctx.font = '28px sans-serif';
-        ctx.fillText('⭐️'.repeat(data.stars), GameConfig.CANVAS_WIDTH / 2, 130);
+        ctx.fillText('⭐️'.repeat(data.stars), constants_1.GameConfig.CANVAS_WIDTH / 2, 130);
         if (data.levelId === 10) {
             ctx.font = '16px sans-serif';
             ctx.fillStyle = '#E65100';
-            ctx.fillText('悦宝，以后要辛苦你啦！', GameConfig.CANVAS_WIDTH / 2, 170);
+            ctx.fillText('悦宝，以后要辛苦你啦！', constants_1.GameConfig.CANVAS_WIDTH / 2, 170);
             ctx.fillStyle = '#5D4037';
         }
     }
     else {
-        ctx.fillText('Game Over', GameConfig.CANVAS_WIDTH / 2, 50);
+        ctx.fillText('Game Over', constants_1.GameConfig.CANVAS_WIDTH / 2, 50);
         ctx.font = '18px sans-serif';
-        ctx.fillText(`分数: ${data.score}`, GameConfig.CANVAS_WIDTH / 2, 90);
+        ctx.fillText(`分数: ${data.score}`, constants_1.GameConfig.CANVAS_WIDTH / 2, 90);
     }
-    const best = Storage.get(STORAGE_KEYS.bestScoreEndless, 0);
-    if (data.mode === GameMode.Endless) {
+    const best = storage_1.Storage.get(constants_1.STORAGE_KEYS.bestScoreEndless, 0);
+    if (data.mode === GameScene_1.GameMode.Endless) {
         ctx.font = '14px sans-serif';
-        ctx.fillText(`历史最高: ${best}`, GameConfig.CANVAS_WIDTH / 2, 130);
+        ctx.fillText(`历史最高: ${best}`, constants_1.GameConfig.CANVAS_WIDTH / 2, 130);
     }
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, btnY, 120, 40, '再来一局', '#FFB300');
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, btnY + 50, 120, 40, '返回菜单', '#66BB6A');
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, btnY, 120, 40, '再来一局', '#FFB300');
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, btnY + 50, 120, 40, '返回菜单', '#66BB6A');
     buttons = [
-        { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: btnY, w: 120, h: 40, label: 'Restart', action: () => scene.handleRestart() },
-        { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: btnY + 50, w: 120, h: 40, label: 'Menu', action: () => scene.handleBackToMenu() },
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: btnY, w: 120, h: 40, label: 'Restart', action: () => scene.handleRestart() },
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: btnY + 50, w: 120, h: 40, label: 'Menu', action: () => scene.handleBackToMenu() },
     ];
 }
 function renderSettings() {
     if (!ctx)
         return;
-    ctx.clearRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.clearRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#FFFDE7';
-    ctx.fillRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.fillRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#5D4037';
     ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('设置', GameConfig.CANVAS_WIDTH / 2, 40);
+    ctx.fillText('设置', constants_1.GameConfig.CANVAS_WIDTH / 2, 40);
     ctx.font = '14px sans-serif';
-    ctx.fillText('更多功能开发中...', GameConfig.CANVAS_WIDTH / 2, 120);
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, 180, 120, 40, '返回', '#9E9E9E');
+    ctx.fillText('更多功能开发中...', constants_1.GameConfig.CANVAS_WIDTH / 2, 120);
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, 180, 120, 40, '返回', '#9E9E9E');
     buttons = [
-        { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 180, w: 120, h: 40, label: 'Back', action: () => {
-                sceneManager.switchTo(new MenuScene(sceneManager));
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: 180, w: 120, h: 40, label: 'Back', action: () => {
+                sceneManager.switchTo(new MenuScene_1.MenuScene(sceneManager));
             } },
     ];
 }
 function renderLeaderboard(scene) {
     if (!ctx)
         return;
-    ctx.clearRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.clearRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#FFFDE7';
-    ctx.fillRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT + GameConfig.HUD_HEIGHT);
+    ctx.fillRect(0, 0, constants_1.GameConfig.CANVAS_WIDTH, constants_1.GameConfig.CANVAS_HEIGHT + constants_1.GameConfig.HUD_HEIGHT);
     ctx.fillStyle = '#5D4037';
     ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('无尽模式排行榜', GameConfig.CANVAS_WIDTH / 2, 32);
+    ctx.fillText('无尽模式排行榜', constants_1.GameConfig.CANVAS_WIDTH / 2, 32);
     if (scene.isLoading()) {
         ctx.font = '14px sans-serif';
-        ctx.fillText('加载中...', GameConfig.CANVAS_WIDTH / 2, 80);
-        drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
+        ctx.fillText('加载中...', constants_1.GameConfig.CANVAS_WIDTH / 2, 80);
+        drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
         buttons = [
-            { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
+            { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
         ];
         return;
     }
     if (scene.hasError()) {
         ctx.font = '14px sans-serif';
-        ctx.fillText('加载失败，请检查网络', GameConfig.CANVAS_WIDTH / 2, 80);
-        drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
+        ctx.fillText('加载失败，请检查网络', constants_1.GameConfig.CANVAS_WIDTH / 2, 80);
+        drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
         buttons = [
-            { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
+            { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
         ];
         return;
     }
     const list = scene.getList();
     if (list.length === 0) {
         ctx.font = '14px sans-serif';
-        ctx.fillText('暂无排行数据', GameConfig.CANVAS_WIDTH / 2, 80);
-        drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
+        ctx.fillText('暂无排行数据', constants_1.GameConfig.CANVAS_WIDTH / 2, 80);
+        drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, 200, 120, 40, '返回', '#9E9E9E');
         buttons = [
-            { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
+            { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: 200, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
         ];
         return;
     }
@@ -365,15 +367,15 @@ function renderLeaderboard(scene) {
     ctx.fillStyle = '#5D4037';
     ctx.textAlign = 'left';
     ctx.fillText('排名', 20, tableStartY);
-    ctx.fillText('分数', GameConfig.CANVAS_WIDTH / 2, tableStartY);
+    ctx.fillText('分数', constants_1.GameConfig.CANVAS_WIDTH / 2, tableStartY);
     ctx.textAlign = 'right';
-    ctx.fillText('玩家', GameConfig.CANVAS_WIDTH - 20, tableStartY);
+    ctx.fillText('玩家', constants_1.GameConfig.CANVAS_WIDTH - 20, tableStartY);
     // Header separator line
     ctx.strokeStyle = '#BDBDBD';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(12, tableStartY + 6);
-    ctx.lineTo(GameConfig.CANVAS_WIDTH - 12, tableStartY + 6);
+    ctx.lineTo(constants_1.GameConfig.CANVAS_WIDTH - 12, tableStartY + 6);
     ctx.stroke();
     // Draw rows
     const maxRows = Math.min(list.length, 20);
@@ -384,16 +386,16 @@ function renderLeaderboard(scene) {
         const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
         ctx.textAlign = 'left';
         ctx.fillText(`${rankEmoji}`, 20, y);
-        ctx.fillText(`${item.score}`, GameConfig.CANVAS_WIDTH / 2, y);
+        ctx.fillText(`${item.score}`, constants_1.GameConfig.CANVAS_WIDTH / 2, y);
         ctx.textAlign = 'right';
         // 显示 openid 前 6 位
         const uid = item.openid ? item.openid.substring(0, 6) : '???';
-        ctx.fillText(uid, GameConfig.CANVAS_WIDTH - 20, y);
+        ctx.fillText(uid, constants_1.GameConfig.CANVAS_WIDTH - 20, y);
     }
     const btnY = tableStartY + (maxRows + 1) * rowH + 20;
-    drawButton(GameConfig.CANVAS_WIDTH / 2 - 60, btnY, 120, 40, '返回', '#9E9E9E');
+    drawButton(constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, btnY, 120, 40, '返回', '#9E9E9E');
     buttons = [
-        { x: GameConfig.CANVAS_WIDTH / 2 - 60, y: btnY, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
+        { x: constants_1.GameConfig.CANVAS_WIDTH / 2 - 60, y: btnY, w: 120, h: 40, label: 'Back', action: () => scene.handleBack() },
     ];
 }
 //# sourceMappingURL=main.js.map

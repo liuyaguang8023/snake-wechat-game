@@ -1,11 +1,14 @@
-import { POWERUP_DEFS } from '../data/powerups';
-export class PowerUpSystem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PowerUpSystem = void 0;
+const powerups_1 = require("../data/powerups");
+class PowerUpSystem {
     constructor() {
         this.actives = new Map();
         this.justActivatedSet = new Set();
     }
     activate(id) {
-        const def = POWERUP_DEFS.find((p) => p.id === id);
+        const def = powerups_1.POWERUP_DEFS.find((p) => p.id === id);
         if (!def)
             return;
         if (def.duration < 0) {
@@ -68,4 +71,5 @@ export class PowerUpSystem {
         this.justActivatedSet.clear();
     }
 }
+exports.PowerUpSystem = PowerUpSystem;
 //# sourceMappingURL=PowerUpSystem.js.map

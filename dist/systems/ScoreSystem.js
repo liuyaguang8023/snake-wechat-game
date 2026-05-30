@@ -1,4 +1,7 @@
-export class ScoreSystem {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ScoreSystem = void 0;
+class ScoreSystem {
     constructor() {
         this.score = 0;
         this.multiplier = 1;
@@ -19,4 +22,5 @@ export class ScoreSystem {
         this.ratingStars = 0;
     }
 }
+exports.ScoreSystem = ScoreSystem;
 //# sourceMappingURL=ScoreSystem.js.map

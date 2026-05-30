@@ -1,4 +1,7 @@
-export class MenuScene {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MenuScene = void 0;
+class MenuScene {
     constructor(sceneManager) {
         this.sceneManager = sceneManager;
     }
@@ -18,4 +21,5 @@ export class MenuScene {
         this.sceneManager.switchTo(new SettingsScene(this.sceneManager));
     }
 }
+exports.MenuScene = MenuScene;
 //# sourceMappingURL=MenuScene.js.map

@@ -1,41 +1,44 @@
-import { Direction, Colors, GameConfig } from '../utils/constants';
-export class Renderer {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Renderer = void 0;
+const constants_1 = require("../utils/constants");
+class Renderer {
     constructor(ctx, width, height) {
         this.ctx = ctx;
         this.width = width;
         this.height = height;
     }
     clear() {
-        this.ctx.fillStyle = Colors.background;
+        this.ctx.fillStyle = constants_1.Colors.background;
         this.ctx.fillRect(0, 0, this.width, this.height);
         this.drawGrid();
     }
     drawGrid() {
-        this.ctx.strokeStyle = Colors.grid;
+        this.ctx.strokeStyle = constants_1.Colors.grid;
         this.ctx.lineWidth = 0.5;
-        for (let r = 0; r < GameConfig.GRID_ROWS; r++) {
-            for (let c = 0; c < GameConfig.GRID_COLS; c++) {
-                this.ctx.strokeRect(c * GameConfig.CELL_SIZE, r * GameConfig.CELL_SIZE, GameConfig.CELL_SIZE, GameConfig.CELL_SIZE);
+        for (let r = 0; r < constants_1.GameConfig.GRID_ROWS; r++) {
+            for (let c = 0; c < constants_1.GameConfig.GRID_COLS; c++) {
+                this.ctx.strokeRect(c * constants_1.GameConfig.CELL_SIZE, r * constants_1.GameConfig.CELL_SIZE, constants_1.GameConfig.CELL_SIZE, constants_1.GameConfig.CELL_SIZE);
             }
         }
     }
     drawSnake(snake, ghosting) {
         this.ctx.globalAlpha = ghosting ? 0.5 : 1;
         snake.body.forEach((seg, i) => {
-            const x = seg.col * GameConfig.CELL_SIZE;
-            const y = seg.row * GameConfig.CELL_SIZE;
+            const x = seg.col * constants_1.GameConfig.CELL_SIZE;
+            const y = seg.row * constants_1.GameConfig.CELL_SIZE;
             const radius = 4;
             const padding = 1;
             if (i === 0) {
-                this.ctx.fillStyle = Colors.snakeHead;
+                this.ctx.fillStyle = constants_1.Colors.snakeHead;
             }
             else if (i === snake.body.length - 1) {
-                this.ctx.fillStyle = Colors.snakeTail;
+                this.ctx.fillStyle = constants_1.Colors.snakeTail;
             }
             else {
-                this.ctx.fillStyle = Colors.snakeBody;
+                this.ctx.fillStyle = constants_1.Colors.snakeBody;
             }
-            this.roundRect(x + padding, y + padding, GameConfig.CELL_SIZE - padding * 2, GameConfig.CELL_SIZE - padding * 2, radius);
+            this.roundRect(x + padding, y + padding, constants_1.GameConfig.CELL_SIZE - padding * 2, constants_1.GameConfig.CELL_SIZE - padding * 2, radius);
             this.ctx.fill();
             if (i === 0) {
                 this.drawEyes(seg, snake.direction);
@@ -44,32 +47,32 @@ export class Renderer {
         this.ctx.globalAlpha = 1;
     }
     drawEyes(head, direction) {
-        const cx = head.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
-        const cy = head.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+        const cx = head.col * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
+        const cy = head.row * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
         const eyeR = 2;
         this.ctx.fillStyle = '#FFFFFF';
         let ex1 = cx, ey1 = cy, ex2 = cx, ey2 = cy;
         const offset = 4;
         switch (direction) {
-            case Direction.Up:
+            case constants_1.Direction.Up:
                 ey1 -= offset;
                 ey2 -= offset;
                 ex1 -= offset;
                 ex2 += offset;
                 break;
-            case Direction.Down:
+            case constants_1.Direction.Down:
                 ey1 += offset;
                 ey2 += offset;
                 ex1 -= offset;
                 ex2 += offset;
                 break;
-            case Direction.Left:
+            case constants_1.Direction.Left:
                 ex1 -= offset;
                 ex2 -= offset;
                 ey1 -= offset;
                 ey2 += offset;
                 break;
-            case Direction.Right:
+            case constants_1.Direction.Right:
                 ex1 += offset;
                 ex2 += offset;
                 ey1 -= offset;
@@ -87,9 +90,9 @@ export class Renderer {
         this.ctx.fill();
     }
     drawFood(position) {
-        const x = position.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
-        const y = position.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
-        const emojiSize = Math.max(GameConfig.CELL_SIZE + 4, 16);
+        const x = position.col * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
+        const y = position.row * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
+        const emojiSize = Math.max(constants_1.GameConfig.CELL_SIZE + 4, 16);
         this.ctx.font = `${emojiSize}px sans-serif`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
@@ -97,18 +100,18 @@ export class Renderer {
     }
     drawObstacles(obstacle) {
         obstacle.positions.forEach((pos) => {
-            const x = pos.col * GameConfig.CELL_SIZE + 2;
-            const y = pos.row * GameConfig.CELL_SIZE + 2;
-            this.ctx.fillStyle = Colors.obstacle;
-            this.roundRect(x, y, GameConfig.CELL_SIZE - 4, GameConfig.CELL_SIZE - 4, 3);
+            const x = pos.col * constants_1.GameConfig.CELL_SIZE + 2;
+            const y = pos.row * constants_1.GameConfig.CELL_SIZE + 2;
+            this.ctx.fillStyle = constants_1.Colors.obstacle;
+            this.roundRect(x, y, constants_1.GameConfig.CELL_SIZE - 4, constants_1.GameConfig.CELL_SIZE - 4, 3);
             this.ctx.fill();
         });
     }
     drawPowerUps(positions) {
         positions.forEach(({ pos, def }) => {
-            const x = pos.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
-            const y = pos.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
-            const emojiSize = Math.max(GameConfig.CELL_SIZE + 4, 16);
+            const x = pos.col * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
+            const y = pos.row * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
+            const emojiSize = Math.max(constants_1.GameConfig.CELL_SIZE + 4, 16);
             this.ctx.font = `${emojiSize}px sans-serif`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
@@ -117,20 +120,20 @@ export class Renderer {
     }
     drawHUD(score, levelName, remaining, paused) {
         // 清除 HUD 区域
-        const hudY = GameConfig.CELL_SIZE * GameConfig.GRID_ROWS;
-        this.ctx.fillStyle = Colors.background;
-        this.ctx.fillRect(0, hudY, this.width, GameConfig.HUD_HEIGHT);
-        this.ctx.fillStyle = Colors.hudText;
+        const hudY = constants_1.GameConfig.CELL_SIZE * constants_1.GameConfig.GRID_ROWS;
+        this.ctx.fillStyle = constants_1.Colors.background;
+        this.ctx.fillRect(0, hudY, this.width, constants_1.GameConfig.HUD_HEIGHT);
+        this.ctx.fillStyle = constants_1.Colors.hudText;
         this.ctx.font = '14px sans-serif';
         this.ctx.textAlign = 'left';
         this.ctx.fillText(`分数: ${score}`, 8, hudY + 18);
         if (levelName) {
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(`${levelName}`, GameConfig.CELL_SIZE * GameConfig.GRID_COLS / 2, hudY + 18);
+            this.ctx.fillText(`${levelName}`, constants_1.GameConfig.CELL_SIZE * constants_1.GameConfig.GRID_COLS / 2, hudY + 18);
         }
         if (remaining !== null) {
             this.ctx.textAlign = 'right';
-            this.ctx.fillText(`剩余: ${remaining}`, GameConfig.CELL_SIZE * GameConfig.GRID_COLS - 8, hudY + 18);
+            this.ctx.fillText(`剩余: ${remaining}`, constants_1.GameConfig.CELL_SIZE * constants_1.GameConfig.GRID_COLS - 8, hudY + 18);
         }
         if (paused) {
             this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -157,4 +160,5 @@ export class Renderer {
         this.ctx.closePath();
     }
 }
+exports.Renderer = Renderer;
 //# sourceMappingURL=Renderer.js.map

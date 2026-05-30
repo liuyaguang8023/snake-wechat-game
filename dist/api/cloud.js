@@ -1,6 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CloudAPI = void 0;
 // 云函数排行榜 API 封装
 const wx = globalThis.wx;
-export const CloudAPI = {
+exports.CloudAPI = {
     /** 上传分数到排行榜 */
     async uploadScore(score, mode) {
         if (!wx?.cloud)

@@ -1,4 +1,7 @@
-export class Obstacle {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Obstacle = void 0;
+class Obstacle {
     constructor(positions) {
         this.positions = positions;
     }
@@ -9,4 +12,5 @@ export class Obstacle {
         return new Obstacle(layout.map((p) => ({ ...p })));
     }
 }
+exports.Obstacle = Obstacle;
 //# sourceMappingURL=Obstacle.js.map

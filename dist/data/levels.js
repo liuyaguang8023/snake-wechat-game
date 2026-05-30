@@ -1,10 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LEVELS = void 0;
 function row(r, cols) {
     return cols.map((c) => ({ row: r, col: c }));
 }
 function col(c, rows) {
     return rows.map((r) => ({ row: r, col: c }));
 }
-export const LEVELS = [
+exports.LEVELS = [
     { id: 1, name: '新手村', target: 10, speed: 200, obstacles: [] },
     {
         id: 2, name: '十字路', target: 12, speed: 180,

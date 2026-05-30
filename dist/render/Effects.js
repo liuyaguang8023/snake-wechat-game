@@ -1,5 +1,8 @@
-import { GameConfig } from '../utils/constants';
-export class Effects {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Effects = void 0;
+const constants_1 = require("../utils/constants");
+class Effects {
     constructor() {
         this.particles = [];
         this.ctx = null;
@@ -8,8 +11,8 @@ export class Effects {
         this.ctx = ctx;
     }
     emitBurst(pos, color, count = 8) {
-        const cx = pos.col * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
-        const cy = pos.row * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
+        const cx = pos.col * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
+        const cy = pos.row * constants_1.GameConfig.CELL_SIZE + constants_1.GameConfig.CELL_SIZE / 2;
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
             const speed = 20 + Math.random() * 40;
@@ -51,4 +54,5 @@ export class Effects {
         this.particles = [];
     }
 }
+exports.Effects = Effects;
 //# sourceMappingURL=Effects.js.map

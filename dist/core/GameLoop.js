@@ -1,4 +1,7 @@
-export class GameLoop {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GameLoop = void 0;
+class GameLoop {
     constructor() {
         this.rafId = 0;
         this.lastTime = 0;
@@ -31,4 +34,5 @@ export class GameLoop {
         return this.running;
     }
 }
+exports.GameLoop = GameLoop;
 //# sourceMappingURL=GameLoop.js.map

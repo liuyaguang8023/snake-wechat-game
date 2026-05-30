@@ -1,4 +1,7 @@
-export class SceneManager {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SceneManager = void 0;
+class SceneManager {
     constructor() {
         this.currentScene = null;
         this.nextScene = null;
@@ -19,4 +22,5 @@ export class SceneManager {
         return this.currentScene;
     }
 }
+exports.SceneManager = SceneManager;
 //# sourceMappingURL=SceneManager.js.map

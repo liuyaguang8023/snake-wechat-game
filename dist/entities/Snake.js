@@ -1,9 +1,12 @@
-import { DirectionVectors, OppositeDirection } from '../utils/constants';
-export class Snake {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Snake = void 0;
+const constants_1 = require("../utils/constants");
+class Snake {
     constructor(head, length, direction) {
         this.direction = direction;
         this.nextDirection = direction;
-        const vec = DirectionVectors[direction];
+        const vec = constants_1.DirectionVectors[direction];
         this.body = [];
         for (let i = 0; i < length; i++) {
             this.body.push({
@@ -16,14 +19,14 @@ export class Snake {
         return this.body[0];
     }
     setDirection(dir) {
-        if (this.body.length > 1 && OppositeDirection[dir] === this.direction)
+        if (this.body.length > 1 && constants_1.OppositeDirection[dir] === this.direction)
             return;
         this.direction = dir;
         this.nextDirection = dir;
     }
     move(eating) {
         this.direction = this.nextDirection;
-        const vec = DirectionVectors[this.direction];
+        const vec = constants_1.DirectionVectors[this.direction];
         const newHead = {
             row: this.head.row + vec.row,
             col: this.head.col + vec.col,
@@ -44,4 +47,5 @@ export class Snake {
         return this.body.map((seg) => ({ ...seg }));
     }
 }
+exports.Snake = Snake;
 //# sourceMappingURL=Snake.js.map

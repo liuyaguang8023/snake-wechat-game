@@ -1,30 +1,33 @@
-import { Snake } from '../entities/Snake';
-import { Food } from '../entities/Food';
-import { Obstacle } from '../entities/Obstacle';
-import { CollisionSystem } from '../systems/CollisionSystem';
-import { ScoreSystem } from '../systems/ScoreSystem';
-import { PowerUpSystem } from '../systems/PowerUpSystem';
-import { LevelSystem } from '../systems/LevelSystem';
-import { EventBus } from '../core/EventBus';
-import { Effects } from '../render/Effects';
-import { GameContext } from '../core/context';
-import { GameConfig, Direction, INITIAL_SNAKE_LENGTH, MAX_POWERUPS_ON_FIELD, POWERUP_SPAWN_FOOD_COUNT, POWERUP_SPAWN_CHANCE, SPEED_TIERS, } from '../utils/constants';
-import { POWERUP_DEFS } from '../data/powerups';
-export var GameMode;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GameScene = exports.GameMode = void 0;
+const Snake_1 = require("../entities/Snake");
+const Food_1 = require("../entities/Food");
+const Obstacle_1 = require("../entities/Obstacle");
+const CollisionSystem_1 = require("../systems/CollisionSystem");
+const ScoreSystem_1 = require("../systems/ScoreSystem");
+const PowerUpSystem_1 = require("../systems/PowerUpSystem");
+const LevelSystem_1 = require("../systems/LevelSystem");
+const EventBus_1 = require("../core/EventBus");
+const Effects_1 = require("../render/Effects");
+const context_1 = require("../core/context");
+const constants_1 = require("../utils/constants");
+const powerups_1 = require("../data/powerups");
+var GameMode;
 (function (GameMode) {
     GameMode["Endless"] = "Endless";
     GameMode["Level"] = "Level";
-})(GameMode || (GameMode = {}));
-export class GameScene {
+})(GameMode || (exports.GameMode = GameMode = {}));
+class GameScene {
     constructor(sceneManager, data) {
         this.sceneManager = sceneManager;
         this.obstacle = null;
-        this.collisionSystem = new CollisionSystem();
-        this.scoreSystem = new ScoreSystem();
-        this.powerUpSystem = new PowerUpSystem();
-        this.levelSystem = new LevelSystem();
-        this.effects = new Effects();
-        this.eventBus = new EventBus();
+        this.collisionSystem = new CollisionSystem_1.CollisionSystem();
+        this.scoreSystem = new ScoreSystem_1.ScoreSystem();
+        this.powerUpSystem = new PowerUpSystem_1.PowerUpSystem();
+        this.levelSystem = new LevelSystem_1.LevelSystem();
+        this.effects = new Effects_1.Effects();
+        this.eventBus = new EventBus_1.EventBus();
         this.moveAccumulator = 0;
         this.paused = false;
         this.gameOver = false;
@@ -37,17 +40,17 @@ export class GameScene {
             this.moveInterval = config.speed;
         }
         else {
-            this.moveInterval = SPEED_TIERS[0].interval;
+            this.moveInterval = constants_1.SPEED_TIERS[0].interval;
         }
     }
     onEnter() {
         this.resetGame();
     }
     resetGame() {
-        const startRow = Math.floor(GameConfig.GRID_ROWS / 2);
-        const startCol = Math.floor(GameConfig.GRID_COLS / 3);
-        this.snake = new Snake({ row: startRow, col: startCol }, INITIAL_SNAKE_LENGTH, Direction.Right);
-        this.food = new Food();
+        const startRow = Math.floor(constants_1.GameConfig.GRID_ROWS / 2);
+        const startCol = Math.floor(constants_1.GameConfig.GRID_COLS / 3);
+        this.snake = new Snake_1.Snake({ row: startRow, col: startCol }, constants_1.INITIAL_SNAKE_LENGTH, constants_1.Direction.Right);
+        this.food = new Food_1.Food();
         this.obstacle = null;
         this.scoreSystem.reset();
         this.powerUpSystem.reset();
@@ -59,19 +62,19 @@ export class GameScene {
         this.effects.clear();
         if (this.mode === GameMode.Level) {
             const config = this.levelSystem.loadLevel(this.levelId);
-            this.obstacle = Obstacle.fromLayout(config.obstacles);
+            this.obstacle = Obstacle_1.Obstacle.fromLayout(config.obstacles);
             this.moveInterval = config.speed;
         }
         else {
-            this.moveInterval = SPEED_TIERS[0].interval;
+            this.moveInterval = constants_1.SPEED_TIERS[0].interval;
         }
         this.food.spawn([...this.snake.body, ...(this.obstacle?.positions ?? [])]);
-        this.effects.bind(GameContext.renderer?.ctx);
+        this.effects.bind(context_1.GameContext.renderer?.ctx);
     }
     onUpdate(dt) {
         if (this.paused || this.gameOver || this.won)
             return;
-        const dir = GameContext.inputManager?.consumeDirection();
+        const dir = context_1.GameContext.inputManager?.consumeDirection();
         if (dir)
             this.snake.setDirection(dir);
         this.powerUpSystem.update(dt);
@@ -92,12 +95,12 @@ export class GameScene {
         if (ghosting) {
             const head = this.snake.head;
             if (head.row < 0)
-                this.snake.body[0] = { ...head, row: GameConfig.GRID_ROWS - 1 };
-            if (head.row >= GameConfig.GRID_ROWS)
+                this.snake.body[0] = { ...head, row: constants_1.GameConfig.GRID_ROWS - 1 };
+            if (head.row >= constants_1.GameConfig.GRID_ROWS)
                 this.snake.body[0] = { ...head, row: 0 };
             if (head.col < 0)
-                this.snake.body[0] = { ...head, col: GameConfig.GRID_COLS - 1 };
-            if (head.col >= GameConfig.GRID_COLS)
+                this.snake.body[0] = { ...head, col: constants_1.GameConfig.GRID_COLS - 1 };
+            if (head.col >= constants_1.GameConfig.GRID_COLS)
                 this.snake.body[0] = { ...head, col: 0 };
         }
         const invincible = this.powerUpSystem.isInvincible();
@@ -158,11 +161,11 @@ export class GameScene {
         this.food.spawn(occupied);
     }
     trySpawnPowerUp() {
-        if (this.fieldPowerUps.length >= MAX_POWERUPS_ON_FIELD)
+        if (this.fieldPowerUps.length >= constants_1.MAX_POWERUPS_ON_FIELD)
             return;
-        if (this.scoreSystem.foodsEaten % POWERUP_SPAWN_FOOD_COUNT !== 0)
+        if (this.scoreSystem.foodsEaten % constants_1.POWERUP_SPAWN_FOOD_COUNT !== 0)
             return;
-        if (Math.random() > POWERUP_SPAWN_CHANCE)
+        if (Math.random() > constants_1.POWERUP_SPAWN_CHANCE)
             return;
         const occupied = [
             ...this.snake.body,
@@ -170,10 +173,10 @@ export class GameScene {
             this.food.position,
             ...this.fieldPowerUps.map((p) => p.pos),
         ];
-        const totalProb = POWERUP_DEFS.reduce((s, d) => s + d.probability, 0);
+        const totalProb = powerups_1.POWERUP_DEFS.reduce((s, d) => s + d.probability, 0);
         let r = Math.random() * totalProb;
-        let chosen = POWERUP_DEFS[0];
-        for (const def of POWERUP_DEFS) {
+        let chosen = powerups_1.POWERUP_DEFS[0];
+        for (const def of powerups_1.POWERUP_DEFS) {
             r -= def.probability;
             if (r <= 0) {
                 chosen = def;
@@ -182,8 +185,8 @@ export class GameScene {
         }
         const occupiedSet = new Set(occupied.map((p) => `${p.row},${p.col}`));
         const freeCells = [];
-        for (let r = 0; r < GameConfig.GRID_ROWS; r++) {
-            for (let c = 0; c < GameConfig.GRID_COLS; c++) {
+        for (let r = 0; r < constants_1.GameConfig.GRID_ROWS; r++) {
+            for (let c = 0; c < constants_1.GameConfig.GRID_COLS; c++) {
                 if (!occupiedSet.has(`${r},${c}`)) {
                     freeCells.push({ row: r, col: c });
                 }
@@ -198,7 +201,7 @@ export class GameScene {
         if (this.mode !== GameMode.Endless)
             return;
         const score = this.scoreSystem.score;
-        const tier = SPEED_TIERS.find((t) => score <= t.maxScore);
+        const tier = constants_1.SPEED_TIERS.find((t) => score <= t.maxScore);
         if (tier)
             this.moveInterval = tier.interval;
     }
@@ -229,7 +232,7 @@ export class GameScene {
         });
     }
     render() {
-        const renderer = GameContext.renderer;
+        const renderer = context_1.GameContext.renderer;
         if (!renderer)
             return;
         renderer.clear();
@@ -237,7 +240,7 @@ export class GameScene {
             renderer.drawObstacles(this.obstacle);
         renderer.drawFood(this.food.position);
         this.fieldPowerUps.forEach((fp) => {
-            const def = POWERUP_DEFS.find((d) => d.id === fp.defId);
+            const def = powerups_1.POWERUP_DEFS.find((d) => d.id === fp.defId);
             if (def)
                 renderer.drawPowerUps([{ pos: fp.pos, def }]);
         });
@@ -264,4 +267,5 @@ export class GameScene {
         this.effects.clear();
     }
 }
+exports.GameScene = GameScene;
 //# sourceMappingURL=GameScene.js.map

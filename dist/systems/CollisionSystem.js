@@ -1,13 +1,16 @@
-import { GameConfig } from '../utils/constants';
-export var CollisionType;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CollisionSystem = exports.CollisionType = void 0;
+const constants_1 = require("../utils/constants");
+var CollisionType;
 (function (CollisionType) {
     CollisionType["None"] = "None";
     CollisionType["Wall"] = "Wall";
     CollisionType["Self"] = "Self";
     CollisionType["Food"] = "Food";
     CollisionType["Obstacle"] = "Obstacle";
-})(CollisionType || (CollisionType = {}));
-export class CollisionSystem {
+})(CollisionType || (exports.CollisionType = CollisionType = {}));
+class CollisionSystem {
     check(snake, foodPos, obstacle) {
         if (this.checkWallCollision(snake))
             return CollisionType.Wall;
@@ -21,7 +24,7 @@ export class CollisionSystem {
     }
     checkWallCollision(snake) {
         const { row, col } = snake.head;
-        return row < 0 || row >= GameConfig.GRID_ROWS || col < 0 || col >= GameConfig.GRID_COLS;
+        return row < 0 || row >= constants_1.GameConfig.GRID_ROWS || col < 0 || col >= constants_1.GameConfig.GRID_COLS;
     }
     checkSelfCollision(snake) {
         const { row, col } = snake.head;
@@ -34,4 +37,5 @@ export class CollisionSystem {
         return obstacle.occupiesPos(snake.head);
     }
 }
+exports.CollisionSystem = CollisionSystem;
 //# sourceMappingURL=CollisionSystem.js.map

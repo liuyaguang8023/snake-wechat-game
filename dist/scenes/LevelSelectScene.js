@@ -1,8 +1,11 @@
-import { LevelSystem } from '../systems/LevelSystem';
-export class LevelSelectScene {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LevelSelectScene = void 0;
+const LevelSystem_1 = require("../systems/LevelSystem");
+class LevelSelectScene {
     constructor(sceneManager) {
         this.sceneManager = sceneManager;
-        this.levelSystem = new LevelSystem();
+        this.levelSystem = new LevelSystem_1.LevelSystem();
     }
     onEnter() { }
     onUpdate(_dt) { }
@@ -21,4 +24,5 @@ export class LevelSelectScene {
         this.sceneManager.switchTo(new MenuScene(this.sceneManager));
     }
 }
+exports.LevelSelectScene = LevelSelectScene;
 //# sourceMappingURL=LevelSelectScene.js.map
